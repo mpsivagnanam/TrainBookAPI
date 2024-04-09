@@ -28,6 +28,10 @@ import com.train.spring.jpa.h2.utils.ResponseMessage;
 import com.train.spring.jpa.h2.utils.ResponseUtils;
 import com.train.spring.jpa.h2.validation.BookingValidation;
 
+/**
+ * This class will process the train booking request and send the response
+ * 
+ */
 @Service
 public class TrainBookingServiceImpl implements TrainBookingService{
 
@@ -42,7 +46,12 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 	 
 	 @Autowired
 	 SeatRepository seatRepository;
-	  
+	
+	 /**
+	  * 
+	  * @param travelRequest
+	  * @return receiptResponse
+	  */
 	@Override
 	public ReceiptResponse purchaseTicket(TravelRequest travelRequest) throws BookingException{
 
@@ -72,19 +81,11 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 	}
 
 
-	private void seatSelectionProcess(final Receipt receipt) {
-		List<Seat> trainList = seatRepository.findAll();
-		  
-		trainList.forEach( e -> {
-			  List<Receipt> receiptList  = receiptRepository.findBySeatId(e.getId());
-			  if(CollectionUtils.isEmpty(receiptList)) {
-				  receipt.setSeatId(e.getId());
-			  }
-			  
-		  });
-	}
-
-	
+	/**
+	 * 
+	 * @param emailId
+	 * @return receiptResponse
+	 */
 	@Override
 	public ReceiptResponse recepitTicket(String emailId) throws BookingException {
 	
@@ -103,6 +104,10 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 	return receiptResponse;
 	}
 	
+	/**
+	 * @param emailId
+	 * @return seatResponse
+	 */
 	@Override
 	public SeatResponse seatDetails(String emailId) {
 		
@@ -120,7 +125,11 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 		return seatResponse;
 	}
 	
-	
+	/**
+	 * 
+	 * @param emailId
+	 * @return response
+	 */
 	@Override
 	public Response removeTicket(String emailId) throws BookingException{
 		
@@ -137,7 +146,11 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 		return response;
 		
 	}
-	
+	/**
+	 * 
+	 * @param travelUpdateRequest
+	 * @return response
+	 */
 	@Override
 	public Response updateTicket(TravelUpdateRequest travelUpdateRequest) {
 
@@ -148,7 +161,17 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 		BookingValidation.receiptListValidation(receiptList);
 		
 		Receipt receipt	= receiptList.get(0);
-		receipt.setSeatId(5);
+		
+		List<Seat> trainList = seatRepository.findBySectionAndSeat(travelUpdateRequest.getSection(), travelUpdateRequest.getSeat());
+		List<Receipt> checkReceiptList  = receiptRepository.findBySeatId(trainList.get(0).getId());
+		  if(CollectionUtils.isEmpty(checkReceiptList)) {
+			  receipt.setSeatId(trainList.get(0).getId());
+		  }else {
+				  ReceiptResponse receiptResponse = new ReceiptResponse();
+				  receiptResponse.setInfo(ResponseMessage.SEAT_FULL);
+				  return receiptResponse;
+			  
+		  }
 		receiptRepository.save(receipt);
 		
 		Response response = new Response();
@@ -156,15 +179,23 @@ public class TrainBookingServiceImpl implements TrainBookingService{
 		return response;
 	}
 	
+	/**
+	 * This method will find the empty seat and get the id and fill it in receipt model
+	 * @param receipt
+	 */
+	private void seatSelectionProcess(final Receipt receipt) {
+		List<Seat> trainList = seatRepository.findAll();
+		  
+		trainList.forEach( e -> {
+			  List<Receipt> receiptList  = receiptRepository.findBySeatId(e.getId());
+			  if(CollectionUtils.isEmpty(receiptList)) {
+				  receipt.setSeatId(e.getId());
+			  }
+			  
+		  });
+	}
 	
 	
-	
-
-	
-
-
-	
-
 	
 
 
